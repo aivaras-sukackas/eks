@@ -1,0 +1,107 @@
+######Deploy eks cluster
+#to create eks cluster
+eksctl create cluster -f eks/eksworkshop.yaml
+
+#confirm succsessful deployment
+kubectl get nodes
+kubectl describe nodes
+
+
+
+######Deploy kubernetes-dashboard
+#deploy kubernetes-dashboard
+kubectl apply -f eks/kubernetes-dashboard.yaml
+
+#create port-forward to access kubernetes-dashboard
+kubectl proxy --port=8080 --address='0.0.0.0' --disable-filter=true &
+
+#access kubernetes-dashboard. In cloud9 environment navigate to Tools / Preview / Preview Running Application. In opened browser window the end of the URL and append:
+/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+#get access token to kubernetes-dashboard
+aws eks get-token --cluster-name eksworkshop-eksctl | jq -r '.status.token'
+
+
+
+######Deploy example microservices
+
+#deploy nodejs api deployment and services
+kubectl apply -f eks/nodejs/
+
+#check NodeJS Backend API deployment and service status
+kubectl get deployment nodejs
+kubectl get service nodejs
+
+#deploy crystal api deployment and services
+kubectl apply -f eks/crystal/
+
+#check crystal Backend API deployment and service status
+kubectl get deployment crystal
+kubectl get service crystal
+
+#deploy frontend deployment and services
+kubectl apply -f eks/frontend/
+
+#check frontend deployment and service status
+kubectl get deployment frontend
+kubectl get service frontend
+
+#scale nodejs deployment and check it
+kubectl scale deployment nodejs --replicas=3
+kubectl get deployments nodejs
+kubectl get pods
+
+#scale crystal  deployment and check it
+kubectl scale deployment crystal  --replicas=3
+kubectl get deployments crystal 
+kubectl get pods
+
+#scale frontend  deployment and check it
+kubectl scale deployment frontend  --replicas=3
+kubectl get deployments frontend 
+kubectl get pods
+
+#make cleanup
+kubectl delete -f eks/frontend/
+kubectl delete -f eks/crystal/
+kubectl delete -f eks/nodejs/
+kubectl delete -f eks/kubernetes-dashboard.yaml
+
+
+######Helm – package manager for Kubernetes
+
+#The following command will build and output the rendered templates without installing the Chart:
+helm install --debug --dry-run workshop eks/eksdemo
+
+#Install helm chart
+helm install workshop eks/eksdemo
+
+#review the underlying services, pods and deployments
+kubectl get svc,po,deploy
+
+#get the name of the ELB endpoint that was generated when we deployed the Chart
+kubectl get svc frontend -o jsonpath="{.status.loadBalancer.ingress[*].hostname}"; echo
+
+#Deploy the updated demo application chart
+helm upgrade workshop eks/eksdemo
+
+#verify the LAST DEPLOYED timestamp:
+helm status workshop
+
+#list deployed helm versions
+helm history workshop
+
+#rollback the application to the previous working release revision
+helm rollback workshop 1
+
+#Validate workshop release status with:
+helm status workshop
+
+#Verify that the error is gone
+kubectl get pods
+
+#cleanup
+helm uninstall workshop
+
+#delete kubernetes cluster:
+eksctl delete cluster --name=eksworkshop-eksctl
