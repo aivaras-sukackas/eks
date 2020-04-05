@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ecsdemo-nodejs
+  name: frontend
 spec:
   selector:
-    app: ecsdemo-nodejs
+    app: frontend
+  type: LoadBalancer
   ports:
    -  protocol: TCP
       port: 80
