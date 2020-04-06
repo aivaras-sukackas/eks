@@ -2,7 +2,7 @@
 #to create eks cluster
 eksctl create cluster -f eks/eksworkshop.yaml
 
-#confirm succsessful deployment
+#confirm successful deployment
 kubectl get nodes
 kubectl describe nodes
 
